@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI 全自动教师</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🎓 AI 全自动教师</h1>
+    
+    <div id="welcome" class="screen">
+      <input type="text" id="studentName" placeholder="请输入你的名字" />
+      <button onclick="startLearning()">开始学习</button>
+    </div>
+
+    <div id="lesson" class="screen hidden">
+      <h2 id="lessonTitle">📚 课程内容</h2>
+      <ul id="lessonContent"></ul>
+      
+      <h3>✏️ 小测验</h3>
+      <div id="quiz"></div>
+      
+      <button onclick="showQnA()">❓ 进入 AI 答疑</button>
+      <button onclick="goHome()">🏠 返回首页</button>
+    </div>
+
+    <div id="qna" class="screen hidden">
+      <h2>💡 向 AI 提问（编程相关）</h2>
+      <div id="chat"></div>
+      <div class="input-area">
+        <input type="text" id="userQuestion" placeholder="例如：什么是变量？" />
+        <button onclick="askAI()">发送</button>
+      </div>
+      <button onclick="showLesson()">⬅️ 返回课程</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
