@@ -1,159 +1,232 @@
-// 简化版 AI 教师 - 兼容性更强
-const COURSE_DATA = {
-  python_basics: {
-    title: "Python 基础入门",
-    content: [
-      "变量用于存储数据，例如：name = 'Alice'",
-      "条件语句用 if/elif/else 控制程序流程",
-      "循环有两种：for 遍历序列，while 在条件为真时重复",
-      "函数用 def 定义，可重复使用代码块"
-    ],
-    quiz: [
-      {
-        question: "以下哪项是定义函数的正确语法？",
-        options: ["function my_func():", "def my_func():", "func my_func():"],
-        answer: 1
-      }
-    ]
-  }
+//题库
+const COURSE_DATA={lessons:[
+    {name:"初中七年级",list:[
+        {q:"3x+6=0 解是",opt:["x=2","x=-2","x=3","x=-3"],ans:"x=-2"},
+        {q:"|a|=5",opt:["5","-5","±5","0"],ans:"±5"},
+        {q:"多边形内角和",opt:["(n-2)*180","n*180","(n+2)*180","n*90"],ans:"(n-2)*180"}
+    ]},
+    {name:"初中八年级",list:[
+        {q:"y=-3x+2 斜率",opt:["-3","3","2","-2"],ans:"-3"},
+        {q:"勾股定理",opt:["a²+b²=c²","a+b=c","a²-b²=c²"],ans:"a²+b²=c²"}
+    ]}
+]};
+const daily=[
+    {q:"-2+-3=?",opt:["-5","-1","5","1"],ans:"-5"},
+    {q:"2x=10",opt:["2","5","10","20"],ans:"5"}
+];
+const test=[
+    {q:"2x-4=0",opt:["1","2","3","4"],ans:"2"},
+    {q:"正方形面积16边长",opt:["2","4","8","16"],ans:"4"}
+];
+
+let studentName="";
+let total=0,right=0,wrongList=[],point=0;
+let allStudents=[],msgs=[],tasks=[];
+
+//身份切换
+document.getElementById("toStudent").onclick=()=>{
+    document.getElementById("role-box").style.display="none";
+    document.getElementById("student-login").style.display="block";
+};
+document.getElementById("toParent").onclick=()=>{
+    document.getElementById("role-box").style.display="none";
+    document.getElementById("parent-login").style.display="block";
+};
+document.getElementById("toTeacher").onclick=()=>{
+    document.getElementById("role-box").style.display="none";
+    document.getElementById("teacher-login").style.display="block";
 };
 
-let studentName = "";
+//学生登录
+document.getElementById("stuLoginBtn").onclick=()=>{
+    let name=document.getElementById("stuName").value.trim();
+    if(!name){alert("请输入名字");return;}
+    studentName=name;
+    document.getElementById("stuShowName").innerText=name;
+    document.getElementById("student-login").style.display="none";
+    document.getElementById("student-main").style.display="block";
+    renderAll();
+};
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(el => {
-    el.style.display = 'none';
-  });
-  document.getElementById(id).style.display = 'block';
-}
+//家长登录
+document.getElementById("parentLoginBtn").onclick=()=>{
+    let name=document.getElementById("parentChildName").value.trim();
+    if(!name){alert("输入孩子姓名");return;}
+    let s=allStudents.find(i=>i.name===name);
+    let html=s?`
+        <div class="student-card">
+            <h3>${s.name} 学习报告</h3>
+            <p>总题：${s.total}</p><p>正确：${s.right}</p><p>错误：${s.wrong}</p>
+            <p>正确率：${s.total?Math.round(s.right/s.total*100):0}%</p>
+            <p>积分：${s.point||0}</p>
+        </div>
+    `:"<p>未找到该学生</p>";
+    document.getElementById("parentResult").innerHTML=html;
+    document.getElementById("parent-login").style.display="none";
+    document.getElementById("parent-main").style.display="block";
+};
 
-function startLearning() {
-  studentName = document.getElementById('studentName').value.trim() || "同学";
-  renderLesson();
-  showScreen('lesson');
-}
+//教师登录
+document.getElementById("teaLoginBtn").onclick=()=>{
+    let u=document.getElementById("teaUser").value,p=document.getElementById("teaPwd").value;
+    if(u==="teacher"&&p==="123456"){
+        document.getElementById("teacher-login").style.display="none";
+        document.getElementById("teacher-main").style.display="block";
+        refreshTeacher();
+    }else alert("账号密码错误");
+};
 
-function showLesson() {
-  showScreen('lesson');
-}
-
-function showQnA() {
-  showScreen('qna');
-  const chat = document.getElementById('chat');
-  chat.innerHTML = '<div class="message ai">你好！我是你的 AI 编程老师，请提问（如“什么是变量？”）</div>';
-}
-
-function goHome() {
-  showScreen('welcome');
-}
-
-function renderLesson() {
-  const lesson = COURSE_DATA.python_basics;
-  document.getElementById('lessonTitle').innerText = `📚 ${lesson.title}`;
-  
-  const contentEl = document.getElementById('lessonContent');
-  contentEl.innerHTML = '';
-  lesson.content.forEach(line => {
-    const li = document.createElement('li');
-    li.textContent = line;
-    contentEl.appendChild(li);
-  });
-
-  const quizEl = document.getElementById('quiz');
-  quizEl.innerHTML = '';
-  lesson.quiz.forEach((q, idx) => {
-    const div = document.createElement('div');
-    div.className = 'quiz-question';
-    div.innerHTML = `
-      <p><strong>问题:</strong> ${q.question}</p>
-      ${q.options.map((opt, i) => 
-        `<label class="option"><input type="radio" name="q${idx}" value="${i}"> ${opt}</label>`
-      ).join('')}
-      <button onclick="checkAnswer(${idx})">提交</button>
-      <p id="result-${idx}"></p>
-    `;
-    quizEl.appendChild(div);
-  });
-}
-
-function checkAnswer(qIdx) {
-  const selected = document.querySelector(`input[name="q${qIdx}"]:checked`);
-  const resultEl = document.getElementById(`result-${qIdx}`);
-  const correct = COURSE_DATA.python_basics.quiz[qIdx].answer;
-  
-  if (!selected) {
-    resultEl.innerText = "请先选择一个答案！";
-    resultEl.style.color = "orange";
-    return;
-  }
-
-  if (parseInt(selected.value) === correct) {
-    resultEl.innerHTML = "✅ 正确！";
-    resultEl.style.color = "green";
-  } else {
-    resultEl.innerHTML = "❌ 错了哦~ 正确答案是：" + COURSE_DATA.python_basics.quiz[qIdx].options[correct];
-    resultEl.style.color = "red";
-  }
-}
-
-// 使用更兼容的 AI 调用方式
-async function askAI() {
-  const input = document.getElementById('userQuestion');
-  const question = input.value.trim();
-  if (!question) return;
-
-  const chat = document.getElementById('chat');
-  const userMsg = document.createElement('div');
-  userMsg.className = 'message user';
-  userMsg.textContent = question;
-  chat.appendChild(userMsg);
-  chat.scrollTop = chat.scrollHeight;
-  
-  input.value = '';
-  input.disabled = true;
-  input.placeholder = "思考中...";
-
-  try {
-    // 使用公开 CORS 代理（临时解决跨域问题）
-    const proxyUrl = 'https://corsproxy.io/?';
-    const targetUrl = 'https://api-inference.huggingface.co/models/Qwen/Qwen2.5-0.5B-Instruct';
-    
-    const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        inputs: `你是编程老师，用中文简洁回答：${question}`,
-        parameters: { max_new_tokens: 200, temperature: 0.7 }
-      })
-    });
-
-    const data = await response.json();
-    let answer = "抱歉，AI 暂时无法回答。";
-
-    if (typeof data === 'string') {
-      answer = data;
-    } else if (Array.isArray(data) && data[0]?.generated_text) {
-      answer = data[0].generated_text;
-    }
-
-    const aiMsg = document.createElement('div');
-    aiMsg.className = 'message ai';
-    aiMsg.textContent = answer;
-    chat.appendChild(aiMsg);
-  } catch (err) {
-    console.error("AI Error:", err);
-    const errorMsg = document.createElement('div');
-    errorMsg.className = 'message ai';
-    errorMsg.textContent = "⚠️ AI 服务暂时不可用，请稍后再试。";
-    chat.appendChild(errorMsg);
-  }
-
-  input.disabled = false;
-  input.placeholder = "例如：什么是列表？";
-  chat.scrollTop = chat.scrollHeight;
-}
-
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
-  showScreen('welcome');
+//标签切换
+document.querySelectorAll(".tab").forEach((tab,i)=>{
+    tab.onclick=()=>{
+        document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+        tab.classList.add("active");
+        document.querySelectorAll(".panel")[i].classList.add("active");
+        if(document.querySelectorAll(".panel")[i].id==="wrong")renderWrong();
+        if(document.querySelectorAll(".panel")[i].id==="msg")renderMsg();
+        if(document.querySelectorAll(".panel")[i].id==="task")renderTask();
+    };
 });
+document.querySelectorAll(".tea-tab").forEach((t,i)=>{
+    t.onclick=()=>{
+        document.querySelectorAll(".tea-tab").forEach(x=>x.classList.remove("active"));
+        document.querySelectorAll(".tea-panel").forEach(x=>x.classList.remove("active"));
+        t.classList.add("active");
+        document.querySelectorAll(".tea-panel")[i].classList.add("active");
+        refreshTeacher();
+    };
+});
+
+//渲染
+function renderAll(){renderQuiz();renderDaily();renderTest();refreshStats();renderMsg();renderTask();}
+function renderQuiz(){
+    let b=document.getElementById("quiz-list");b.innerHTML="";
+    COURSE_DATA.lessons.forEach((les,li)=>{
+        let d=document.createElement("div");
+        d.innerHTML=`<h3 class="lesson-title">${les.name}</h3>`;
+        les.list.forEach((q,qi)=>{
+            let id=li*100+qi;
+            d.innerHTML+=`
+                <div class="quiz-item">
+                    <p>题目${qi+1}：${q.q}</p>
+                    ${q.opt.map(o=>`<label class="option"><input type="radio" name="q${id}" value="${o}">${o}</label>`).join('')}
+                    <button onclick="check(${li},${qi},${id})">提交</button>
+                    <p id="res${id}" class="result"></p>
+                </div>`;
+        });
+        b.appendChild(d);
+    });
+}
+function renderDaily(){
+    let b=document.getElementById("daily-list");b.innerHTML="";
+    daily.forEach((q,i)=>{
+        b.innerHTML+=`
+            <div class="quiz-item">
+                <p>每日${i+1}：${q.q}</p>
+                ${q.opt.map(o=>`<label class="option"><input type="radio" name="d${i}" value="${o}">${o}</label>`).join('')}
+                <button onclick="checkDaily(${i})">提交</button>
+                <p id="dres${i}" class="result"></p>
+            </div>`;
+    });
+}
+function renderTest(){
+    let b=document.getElementById("test-list");b.innerHTML="";
+    test.forEach((q,i)=>{
+        b.innerHTML+=`
+            <div class="quiz-item">
+                <p>测试${i+1}：${q.q}</p>
+                ${q.opt.map(o=>`<label class="option"><input type="radio" name="t${i}" value="${o}">${o}</label>`).join('')}
+            </div>`;
+    });
+}
+
+//判题+积分
+function check(li,qi,id){
+    let q=COURSE_DATA.lessons[li].list[qi];
+    let s=document.querySelector(`input[name="q${id}"]:checked`);
+    if(!s){document.getElementById(`res${id}`).innerText="请选择";return;}
+    total++;
+    if(s.value===q.ans){right++;point+=5;document.getElementById(`res${id}`).innerText="✅ +5积分";}
+    else{wrongList.push({q:q.q,you:s.value,ans:q.ans});document.getElementById(`res${id}`).innerText="❌ "+q.ans;}
+    save();refreshStats();
+}
+function checkDaily(i){
+    let q=daily[i];let s=document.querySelector(`input[name="d${i}"]:checked`);
+    if(!s)return;total++;
+    if(s.value===q.ans){right++;point+=3;document.getElementById(`dres${i}`).innerText="✅ +3积分";}
+    else{wrongList.push({q:q.q,you:s.value,ans:q.ans});document.getElementById(`dres${i}`).innerText="❌ "+q.ans;}
+    save();refreshStats();
+}
+document.getElementById("submitTest").onclick=()=>{
+    let r=0;test.forEach((q,i)=>{let s=document.querySelector(`input[name="t${i}"]:checked`);if(s&&s.value===q.ans)r++;});
+    document.getElementById("test-result").innerText=`得分：${r}/${test.length}`;
+    point+=r*2;save();refreshStats();
+};
+
+//统计
+function refreshStats(){
+    document.getElementById("total").innerText=total;
+    document.getElementById("right").innerText=right;
+    document.getElementById("wrong-count").innerText=wrongList.length;
+    document.getElementById("rate").innerText=(total?Math.round(right/total*100):0)+"%";
+    document.getElementById("scorePoint").innerText=point;
+}
+function renderWrong(){
+    let b=document.getElementById("wrong-list");
+    b.innerHTML=wrongList.length?wrongList.map((w,i)=>`
+        <div class="wrong-item"><p>错题${i+1}：${w.q}</p><p>你：${w.you} 正确：${w.ans}</p></div>
+    `).join(''):"<p>暂无错题</p>";
+}
+
+//留言
+document.getElementById("sendMsg").onclick=()=>{
+    let c=document.getElementById("msgInput").value;if(!c)return;
+    msgs.push({name:studentName,content:c,time:new Date().toLocaleString()});
+    document.getElementById("msgInput").value="";renderMsg();
+};
+function renderMsg(){
+    document.getElementById("msgList").innerHTML=msgs.map(m=>`
+        <div class="msg-item"><b>${m.name}</b> ${m.time}<br>${m.content}</div>
+    `).join('');
+}
+
+//作业
+document.getElementById("sendTask").onclick=()=>{
+    let c=document.getElementById("taskContent").value;if(!c)return;
+    tasks.push({name:studentName,content:c,time:new Date().toLocaleString()});
+    document.getElementById("taskContent").value="";renderTask();alert("提交成功");
+};
+function renderTask(){
+    document.getElementById("taskList").innerHTML=tasks.filter(t=>t.name===studentName).map(t=>`
+        <div class="task-item">${t.time}<br>${t.content}</div>
+    `).join('');
+}
+
+//保存学生
+function save(){
+    let d={name:studentName,total,right,wrong:wrongList.length,point,wrongList};
+    let i=allStudents.findIndex(s=>s.name===studentName);
+    if(i>=0)allStudents[i]=d;else allStudents.push(d);
+}
+
+//教师刷新
+function refreshTeacher(){
+    document.getElementById("student-data").innerHTML=allStudents.map(s=>`
+        <div class="student-card"><h3>${s.name}</h3><p>总题：${s.total} 正确：${s.right} 积分：${s.point||0}</p></div>
+    `).join('');
+    document.getElementById("teacherTaskList").innerHTML=tasks.map(t=>`
+        <div class="task-item"><b>${t.name}</b> ${t.time}<br>${t.content}</div>
+    `).join('');
+    document.getElementById("teacherMsgList").innerHTML=msgs.map(m=>`
+        <div class="msg-item"><b>${m.name}</b> ${m.time}<br>${m.content}</div>
+    `).join('');
+}
+
+//教师加题
+document.getElementById("addQuestion").onclick=()=>{
+    let q=document.getElementById("qTitle").value,o1=document.getElementById("qOpt1").value,o2=document.getElementById("qOpt2").value,a=document.getElementById("qAns").value;
+    if(!q||!o1||!o2||!a){alert("填写完整");return;}
+    COURSE_DATA.lessons[0].list.push({q,opt:[o1,o2,document.getElementById("qOpt3").value,document.getElementById("qOpt4").value],ans:a});
+    alert("添加成功");renderQuiz();
+};

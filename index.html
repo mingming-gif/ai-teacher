@@ -1,42 +1,147 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI 全自动教师</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI全科智能学习平台</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body>
-  <div class="container">
-    <h1>🎓 AI 全自动教师</h1>
-    
-    <div id="welcome" class="screen">
-      <input type="text" id="studentName" placeholder="请输入你的名字" />
-      <button onclick="startLearning()">开始学习</button>
+    <div class="container">
+        <h1>🧠 AI全科智能学习平台</h1>
+        <p class="subtitle">数学题库 | 视频讲解 | 错题本 | 积分打卡 | 作业上传 | 家长查看</p>
+
+        <!-- 身份选择 -->
+        <div id="role-box">
+            <button id="toStudent">学生登录</button>
+            <button id="toParent">家长查看</button>
+            <button id="toTeacher">教师后台</button>
+        </div>
+
+        <!-- 学生登录 -->
+        <div id="student-login" class="login-form" style="display:none;">
+            <input type="text" id="stuName" placeholder="请输入你的名字">
+            <button id="stuLoginBtn">进入学习</button>
+        </div>
+
+        <!-- 家长登录 -->
+        <div id="parent-login" class="login-form" style="display:none;">
+            <input type="text" id="parentChildName" placeholder="请输入孩子姓名">
+            <button id="parentLoginBtn">查看学习情况</button>
+        </div>
+
+        <!-- 教师登录 -->
+        <div id="teacher-login" class="login-form" style="display:none;">
+            <input type="text" id="teaUser" placeholder="教师账号">
+            <input type="password" id="teaPwd" placeholder="教师密码">
+            <button id="teaLoginBtn">进入后台</button>
+        </div>
+
+        <!-- 学生主界面 -->
+        <div id="student-main" style="display:none;">
+            <div class="user-info">欢迎：<span id="stuShowName"></span> ⭐ 积分：<span id="scorePoint">0</span></div>
+            <div class="tab-box">
+                <button class="tab active" data-target="study">📖 题库学习</button>
+                <button class="tab" data-target="daily">📅 每日一练</button>
+                <button class="tab" data-target="test">📝 章节测试</button>
+                <button class="tab" data-target="video">🎬 视频讲解</button>
+                <button class="tab" data-target="ai">🤖 AI辅导</button>
+                <button class="tab" data-target="books">📚 数学书籍</button>
+                <button class="tab" data-target="read">📖 课外阅读</button>
+                <button class="tab" data-target="wrong">❌ 错题本</button>
+                <button class="tab" data-target="task">📤 作业上传</button>
+                <button class="tab" data-target="msg">💬 留言板</button>
+                <button class="tab" data-target="score">📊 统计</button>
+            </div>
+
+            <!-- 题库 -->
+            <div class="panel active" id="study"><h2>📘 数学题库</h2><div id="quiz-list"></div></div>
+            <!-- 每日一练 -->
+            <div class="panel" id="daily"><h2>📅 每日一练</h2><div id="daily-list"></div></div>
+            <!-- 章节测试 -->
+            <div class="panel" id="test"><h2>📝 章节测试</h2><div id="test-list"></div><button id="submitTest">提交答案</button><div id="test-result"></div></div>
+            <!-- 视频 -->
+            <div class="panel" id="video">
+                <h2>🎬 视频讲解</h2>
+                <div class="video-list">
+                    <div class="video-item"><h3>一元一次方程</h3><iframe src="//player.bilibili.com/player.html?aid=656463214&bvid=BV12M411Y7hQ" frameborder="no" allowfullscreen></iframe></div>
+                    <div class="video-item"><h3>勾股定理</h3><iframe src="//player.bilibili.com/player.html?aid=288566327&bvid=BV1au4y1z7Ld" frameborder="no" allowfullscreen></iframe></div>
+                    <div class="video-item"><h3>初中函数</h3><iframe src="//player.bilibili.com/player.html?aid=323566975&bvid=BV1KH4y1X7nL" frameborder="no" allowfullscreen></iframe></div>
+                    <div class="video-item"><h3>高中函数</h3><iframe src="//player.bilibili.com/player.html?aid=496465432&bvid=BV1Fg4y1z7sK" frameborder="no" allowfullscreen></iframe></div>
+                </div>
+            </div>
+            <!-- AI -->
+            <div class="panel" id="ai">
+                <h2>🤖 AI辅导</h2>
+                <div class="ai-card">
+                    <ul>
+                        <li>公式考点系统梳理</li><li>解题步骤详细讲解</li>
+                        <li>薄弱环节分析</li><li>错题归类强化训练</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- 数学书籍 -->
+            <div class="panel" id="books">
+                <h2>📚 数学书籍</h2>
+                <div class="book-section"><h3>初中</h3><div class="book">初中数学知识清单</div><div class="book">几何辅助线秘籍</div></div>
+                <div class="book-section"><h3>高中</h3><div class="book">高中数学基础知识手册</div><div class="book">高考题型与技巧</div></div>
+            </div>
+            <!-- 课外阅读 -->
+            <div class="panel" id="read">
+                <h2>📖 全年龄段课外阅读</h2>
+                <div class="book-section"><h3>小学故事</h3><div class="book">夏洛的网</div><div class="book">小王子</div><div class="book">草房子</div></div>
+                <div class="book-section"><h3>初中文学</h3><div class="book">朝花夕拾</div><div class="book">钢铁是怎样炼成的</div></div>
+                <div class="book-section"><h3>人物传记</h3><div class="book">苏东坡传</div><div class="book">居里夫人传</div><div class="book">毛泽东传</div></div>
+                <div class="book-section"><h3>科技科普</h3><div class="book">时间简史</div><div class="book">从一到无穷大</div><div class="book">科学的历程</div></div>
+            </div>
+            <!-- 错题本 -->
+            <div class="panel" id="wrong"><h2>❌ 错题本</h2><div id="wrong-list"></div></div>
+            <!-- 作业上传 -->
+            <div class="panel" id="task"><h2>📤 作业提交</h2><input type="text" id="taskContent" placeholder="输入作业内容"><button id="sendTask">提交作业</button><div id="taskList"></div></div>
+            <!-- 留言板 -->
+            <div class="panel" id="msg"><h2>💬 留言板</h2><input type="text" id="msgInput" placeholder="输入留言"><button id="sendMsg">发送</button><div id="msgList"></div></div>
+            <!-- 统计 -->
+            <div class="panel" id="score">
+                <h2>📊 学习统计</h2>
+                <div class="stat-item">总答题：<span id="total"></span></div>
+                <div class="stat-item">正确：<span id="right"></span></div>
+                <div class="stat-item">错误：<span id="wrong-count"></span></div>
+                <div class="stat-item">正确率：<span id="rate"></span></div>
+            </div>
+        </div>
+
+        <!-- 家长查看界面 -->
+        <div id="parent-main" style="display:none;">
+            <h2>👨‍👩‍👧‍👦 家长查看中心</h2>
+            <div id="parentResult"></div>
+        </div>
+
+        <!-- 教师后台 -->
+        <div id="teacher-main" style="display:none;">
+            <h2>👨‍🏫 教师管理后台</h2>
+            <div class="tab-box">
+                <button class="tea-tab active" data-tea="student">学生数据</button>
+                <button class="tea-tab" data-tea="task">作业查看</button>
+                <button class="tea-tab" data-tea="msg">留言管理</button>
+                <button class="tea-tab" data-tea="add">新增题目</button>
+            </div>
+            <div class="tea-panel active" id="student-panel"><div id="student-data"></div></div>
+            <div class="tea-panel" id="task-panel"><div id="teacherTaskList"></div></div>
+            <div class="tea-panel" id="msg-panel"><div id="teacherMsgList"></div></div>
+            <div class="tea-panel" id="add-panel">
+                <h3>➕ 添加题目</h3>
+                <input type="text" id="qTitle" placeholder="题目"><br>
+                <input type="text" id="qOpt1" placeholder="选项1"><br>
+                <input type="text" id="qOpt2" placeholder="选项2"><br>
+                <input type="text" id="qOpt3" placeholder="选项3"><br>
+                <input type="text" id="qOpt4" placeholder="选项4"><br>
+                <input type="text" id="qAns" placeholder="正确答案"><br>
+                <button id="addQuestion">添加题目</button>
+            </div>
+        </div>
     </div>
 
-    <div id="lesson" class="screen hidden">
-      <h2 id="lessonTitle">📚 课程内容</h2>
-      <ul id="lessonContent"></ul>
-      
-      <h3>✏️ 小测验</h3>
-      <div id="quiz"></div>
-      
-      <button onclick="showQnA()">❓ 进入 AI 答疑</button>
-      <button onclick="goHome()">🏠 返回首页</button>
-    </div>
-
-    <div id="qna" class="screen hidden">
-      <h2>💡 向 AI 提问（编程相关）</h2>
-      <div id="chat"></div>
-      <div class="input-area">
-        <input type="text" id="userQuestion" placeholder="例如：什么是变量？" />
-        <button onclick="askAI()">发送</button>
-      </div>
-      <button onclick="showLesson()">⬅️ 返回课程</button>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
