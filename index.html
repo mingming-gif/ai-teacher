@@ -1,22 +1,275 @@
-<!-- 导航栏 -->
-<div class="tab-bar">
-    <button class="tab-btn" data-tab="题库学习">题库学习</button>
-    <button class="tab-btn" data-tab="每日一练">每日一练</button>
-    <button class="tab-btn" data-tab="章节测试">章节测试</button>
-    <button class="tab-btn" data-tab="视频讲解">视频讲解</button>
-    <button class="tab-btn active" data-tab="AI辅导">AI辅导</button>
-    <button class="tab-btn" data-tab="数学书籍">数学书籍</button>
-    <button class="tab-btn" data-tab="课外阅读">课外阅读</button>
-    <button class="tab-btn" data-tab="错题本">错题本</button>
-    <button class="tab-btn" data-tab="作业上传">作业上传</button>
-    <button class="tab-btn" data-tab="留言板">留言板</button>
-    <button class="tab-btn" data-tab="统计">统计</button>
-</div>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI全科智能学习平台 - 带阅读功能版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f5f7fa; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; color: #333; }
+        .header p { color: #666; font-size: 14px; margin-top: 5px; }
+        .tab-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 16px; border: none; border-radius: 4px; background: #e8e8e8; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .tab-btn.active { background: #1677ff; color: #fff; }
+        .main-content { background: #fff; padding: 20px; border-radius: 8px; min-height: 500px; }
+        .module-title { font-size: 20px; margin-bottom: 20px; color: #333; }
+        .book-category { font-size: 16px; font-weight: bold; margin: 15px 0 10px; color: #555; }
+        .book-item { padding: 12px; background: #f5f7fa; border-radius: 4px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+        .book-item:hover { background: #e6f0ff; }
+        .ai-tutor-content { line-height: 1.8; }
+        .ai-btn { margin-top: 15px; padding: 10px 24px; background: #1677ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .ai-btn:hover { background: #0d5cb3; }
+        .placeholder { color: #666; text-align: center; padding: 40px 0; }
 
-<!-- 主内容容器（JS渲染的内容都会在这里加载） -->
-<div id="main-content" class="main-content">
-    <!-- 内容会通过JS动态渲染到这里 -->
-</div>
+        /* 阅读页面样式 */
+        .reader-container { display: none; }
+        .reader-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .reader-back-btn { padding: 6px 12px; background: #f0f0f0; border: none; border-radius: 4px; cursor: pointer; }
+        .reader-content { line-height: 2; font-size: 16px; color: #333; white-space: pre-line; max-height: 600px; overflow-y: auto; padding: 10px; background: #fafafa; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 AI全科智能学习平台</h1>
+        <p>数学题库 | 视频讲解 | 错题本 | 积分打卡 | 作业上传 | 家长查看</p>
+        <div style="text-align: right; margin-top: 10px;">
+            <span>欢迎: 小明 ⭐ 积分: 39</span>
+        </div>
+    </div>
 
-<!-- 引入修复后的script.js -->
-<script src="script.js"></script>
+    <!-- 主界面 -->
+    <div id="main-interface">
+        <div class="tab-bar">
+            <button class="tab-btn" data-tab="题库学习">题库学习</button>
+            <button class="tab-btn" data-tab="每日一练">每日一练</button>
+            <button class="tab-btn" data-tab="章节测试">章节测试</button>
+            <button class="tab-btn" data-tab="视频讲解">视频讲解</button>
+            <button class="tab-btn" data-tab="AI辅导">AI辅导</button>
+            <button class="tab-btn" data-tab="数学书籍">数学书籍</button>
+            <button class="tab-btn active" data-tab="课外阅读">课外阅读</button>
+            <button class="tab-btn" data-tab="错题本">错题本</button>
+            <button class="tab-btn" data-tab="作业上传">作业上传</button>
+            <button class="tab-btn" data-tab="留言板">留言板</button>
+            <button class="tab-btn" data-tab="统计">统计</button>
+        </div>
+
+        <div class="main-content" id="main-content">
+            <!-- 主界面内容 -->
+        </div>
+    </div>
+
+    <!-- 阅读界面 -->
+    <div class="reader-container" id="reader-interface">
+        <div class="reader-header">
+            <button class="reader-back-btn" onclick="backToMain()">← 返回列表</button>
+            <h3 id="reader-title"></h3>
+            <div></div>
+        </div>
+        <div class="reader-content" id="reader-content"></div>
+    </div>
+
+    <script>
+        // ========== 1. 书籍正文数据（可自行添加/修改） ==========
+        const bookContents = {
+            '夏洛的网': `《夏洛的网》第一章 早饭前
+在朱克曼家的谷仓里，住着一群快乐的动物，其中小猪威尔伯和蜘蛛夏洛建立了最真挚的友谊。
+
+威尔伯出生时是一只落脚猪，差点被杀死，幸好被小女孩弗恩救下。后来，威尔伯被送到了朱克曼家的谷仓里，和其他动物一起生活。
+
+谷仓里的生活很平静，直到威尔伯得知自己未来的命运是变成熏肉火腿。就在威尔伯绝望的时候，夏洛说：“我救你。”于是，夏洛在猪栏上织出了被人类视为奇迹的网上文字，这些赞美威尔伯的文字彻底改变了威尔伯的命运，让它在集市的大赛中赢得了特别奖，和一个安享天年的未来。
+
+但这时，夏洛的生命也走到了尽头。威尔伯带着夏洛的卵袋回到了谷仓，守护着夏洛的孩子、孙子和曾孙，永远怀念着它。`,
+
+            '小王子': `《小王子》第一章
+我六岁的时候，在一本描写原始森林的名叫《真实的故事》的书中，看到了一幅精彩的插画，画的是一条蟒蛇正在吞食一只大野兽。
+
+我把我的得意之作给大人们看，问他们我的画是不是让他们害怕。
+
+他们回答我说：“一顶帽子有什么可怕的？”
+
+我画的不是帽子，是一条巨蟒在消化着一头大象。于是我又把巨蟒肚子里的情况画了出来，以便让大人们能够看懂。
+
+大人们总是需要解释。`,
+
+            '朝花夕拾': `《朝花夕拾》- 从百草园到三味书屋
+我家的后面有一个很大的园，相传叫作百草园。现在是早已并屋子一起卖给朱文公的子孙了，连那最末次的相见也已经隔了七八年，其中似乎确凿只有一些野草；但那时却是我的乐园。
+
+不必说碧绿的菜畦，光滑的石井栏，高大的皂荚树，紫红的桑椹；也不必说鸣蝉在树叶里长吟，肥胖的黄蜂伏在菜花上，轻捷的叫天子（云雀）忽然从草间直窜向云霄里去了。单是周围的短短的泥墙根一带，就有无限趣味。`,
+
+            '初中数学知识清单': `初中数学核心知识点清单
+一、代数部分
+1. 有理数：正负数、数轴、相反数、绝对值、有理数的四则运算
+2. 整式：单项式、多项式、合并同类项、去括号法则
+3. 一元一次方程：解法、应用（行程、工程、利润问题）
+4. 二元一次方程组：代入消元法、加减消元法
+5. 不等式与不等式组：解法、解集表示
+
+二、几何部分
+1. 相交线与平行线：对顶角、邻补角、平行线的判定与性质
+2. 三角形：三边关系、内角和、全等三角形判定（SSS/SAS/ASA/AAS）
+3. 轴对称：等腰三角形性质、垂直平分线、角平分线
+4. 勾股定理：a²+b²=c²，及其逆定理`
+        };
+
+        // ========== 2. 模块数据 ==========
+        const moduleData = {
+            'AI辅导': {
+                title: '🤖 AI辅导',
+                render: function() {
+                    return `
+                        <div class="ai-tutor-content">
+                            <ul style="list-style: disc inside;">
+                                <li>公式考点系统梳理</li>
+                                <li>解题步骤详细讲解</li>
+                                <li>薄弱环节分析</li>
+                                <li>错题归类强化训练</li>
+                            </ul>
+                            <p style="margin-top: 15px; color: #666;">点击下方按钮，即可开启AI智能辅导对话。</p>
+                            <button class="ai-btn" onclick="alert('✅ AI辅导功能已激活！\\n\\n后续可以在这里对接真实AI对话接口。')">开启AI辅导</button>
+                        </div>
+                    `;
+                }
+            },
+            '数学书籍': {
+                title: '📚 数学书籍',
+                render: function() {
+                    const books = [
+                        { category: '初中', name: '初中数学知识清单' },
+                        { category: '初中', name: '几何辅助线秘籍' },
+                        { category: '高中', name: '高中数学基础知识手册' },
+                        { category: '高中', name: '高考题型与技巧' }
+                    ];
+                    let html = '';
+                    const categories = [...new Set(books.map(b => b.category))];
+                    categories.forEach(cat => {
+                        html += `<div class="book-category">${cat}</div>`;
+                        books.filter(b => b.category === cat).forEach(book => {
+                            html += `<div class="book-item" onclick="openBook('${book.name}')">${book.name}</div>`;
+                        });
+                    });
+                    return html;
+                }
+            },
+            '课外阅读': {
+                title: '📖 全年龄段课外阅读',
+                render: function() {
+                    const books = [
+                        { category: '小学故事', name: '夏洛的网' },
+                        { category: '小学故事', name: '小王子' },
+                        { category: '小学故事', name: '草房子' },
+                        { category: '初中文学', name: '朝花夕拾' },
+                        { category: '初中文学', name: '钢铁是怎样炼成的' },
+                        { category: '人物传记', name: '苏东坡传' },
+                        { category: '人物传记', name: '居里夫人传' },
+                        { category: '人物传记', name: '毛泽东传' }
+                    ];
+                    let html = '';
+                    const categories = [...new Set(books.map(b => b.category))];
+                    categories.forEach(cat => {
+                        html += `<div class="book-category">${cat}</div>`;
+                        books.filter(b => b.category === cat).forEach(book => {
+                            html += `<div class="book-item" onclick="openBook('${book.name}')">${book.name}</div>`;
+                        });
+                    });
+                    return html;
+                }
+            },
+            '题库学习': {
+                title: '📝 题库学习',
+                render: function() {
+                    return `<div class="placeholder">题库学习模块内容，敬请期待...</div>`;
+                }
+            },
+            '每日一练': {
+                title: '📅 每日一练',
+                render: function() {
+                    return `<div class="placeholder">每日一练模块内容，敬请期待...</div>`;
+                }
+            },
+            '章节测试': {
+                title: '📋 章节测试',
+                render: function() {
+                    return `<div class="placeholder">章节测试模块内容，敬请期待...</div>`;
+                }
+            },
+            '视频讲解': {
+                title: '🎬 视频讲解',
+                render: function() {
+                    return `<div class="placeholder">视频讲解模块内容，敬请期待...</div>`;
+                }
+            },
+            '错题本': {
+                title: '❌ 错题本',
+                render: function() {
+                    return `<div class="placeholder">错题本模块内容，敬请期待...</div>`;
+                }
+            },
+            '作业上传': {
+                title: '📤 作业上传',
+                render: function() {
+                    return `<div class="placeholder">作业上传模块内容，敬请期待...</div>`;
+                }
+            },
+            '留言板': {
+                title: '💬 留言板',
+                render: function() {
+                    return `<div class="placeholder">留言板模块内容，敬请期待...</div>`;
+                }
+            },
+            '统计': {
+                title: '📊 统计',
+                render: function() {
+                    return `<div class="placeholder">统计模块内容，敬请期待...</div>`;
+                }
+            }
+        };
+
+        // ========== 3. 核心功能：书籍阅读跳转 ==========
+        function openBook(bookName) {
+            // 切换到阅读界面
+            document.getElementById('main-interface').style.display = 'none';
+            document.getElementById('reader-interface').style.display = 'block';
+
+            // 设置书籍标题和内容
+            document.getElementById('reader-title').textContent = bookName;
+            document.getElementById('reader-content').textContent = bookContents[bookName] || `《${bookName}》正文内容\n（可在代码中添加完整文本）`;
+        }
+
+        function backToMain() {
+            // 切换回主界面
+            document.getElementById('reader-interface').style.display = 'none';
+            document.getElementById('main-interface').style.display = 'block';
+        }
+
+        // ========== 4. 标签切换逻辑 ==========
+        const tabs = document.querySelectorAll('.tab-btn');
+        const mainContent = document.getElementById('main-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 切换高亮
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // 渲染内容
+                const tabName = this.getAttribute('data-tab');
+                const module = moduleData[tabName];
+                if (module) {
+                    mainContent.innerHTML = `
+                        <h3 class="module-title">${module.title}</h3>
+                        ${module.render()}
+                    `;
+                }
+            });
+        });
+
+        // ========== 5. 初始化渲染 ==========
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab) {
+            activeTab.click();
+        }
+    </script>
+</body>
+</html>
