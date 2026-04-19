@@ -1,232 +1,165 @@
-//题库
-const COURSE_DATA={lessons:[
-    {name:"初中七年级",list:[
-        {q:"3x+6=0 解是",opt:["x=2","x=-2","x=3","x=-3"],ans:"x=-2"},
-        {q:"|a|=5",opt:["5","-5","±5","0"],ans:"±5"},
-        {q:"多边形内角和",opt:["(n-2)*180","n*180","(n+2)*180","n*90"],ans:"(n-2)*180"}
-    ]},
-    {name:"初中八年级",list:[
-        {q:"y=-3x+2 斜率",opt:["-3","3","2","-2"],ans:"-3"},
-        {q:"勾股定理",opt:["a²+b²=c²","a+b=c","a²-b²=c²"],ans:"a²+b²=c²"}
-    ]}
-]};
-const daily=[
-    {q:"-2+-3=?",opt:["-5","-1","5","1"],ans:"-5"},
-    {q:"2x=10",opt:["2","5","10","20"],ans:"5"}
-];
-const test=[
-    {q:"2x-4=0",opt:["1","2","3","4"],ans:"2"},
-    {q:"正方形面积16边长",opt:["2","4","8","16"],ans:"4"}
-];
-
-let studentName="";
-let total=0,right=0,wrongList=[],point=0;
-let allStudents=[],msgs=[],tasks=[];
-
-//身份切换
-document.getElementById("toStudent").onclick=()=>{
-    document.getElementById("role-box").style.display="none";
-    document.getElementById("student-login").style.display="block";
-};
-document.getElementById("toParent").onclick=()=>{
-    document.getElementById("role-box").style.display="none";
-    document.getElementById("parent-login").style.display="block";
-};
-document.getElementById("toTeacher").onclick=()=>{
-    document.getElementById("role-box").style.display="none";
-    document.getElementById("teacher-login").style.display="block";
-};
-
-//学生登录
-document.getElementById("stuLoginBtn").onclick=()=>{
-    let name=document.getElementById("stuName").value.trim();
-    if(!name){alert("请输入名字");return;}
-    studentName=name;
-    document.getElementById("stuShowName").innerText=name;
-    document.getElementById("student-login").style.display="none";
-    document.getElementById("student-main").style.display="block";
-    renderAll();
-};
-
-//家长登录
-document.getElementById("parentLoginBtn").onclick=()=>{
-    let name=document.getElementById("parentChildName").value.trim();
-    if(!name){alert("输入孩子姓名");return;}
-    let s=allStudents.find(i=>i.name===name);
-    let html=s?`
-        <div class="student-card">
-            <h3>${s.name} 学习报告</h3>
-            <p>总题：${s.total}</p><p>正确：${s.right}</p><p>错误：${s.wrong}</p>
-            <p>正确率：${s.total?Math.round(s.right/s.total*100):0}%</p>
-            <p>积分：${s.point||0}</p>
-        </div>
-    `:"<p>未找到该学生</p>";
-    document.getElementById("parentResult").innerHTML=html;
-    document.getElementById("parent-login").style.display="none";
-    document.getElementById("parent-main").style.display="block";
-};
-
-//教师登录
-document.getElementById("teaLoginBtn").onclick=()=>{
-    let u=document.getElementById("teaUser").value,p=document.getElementById("teaPwd").value;
-    if(u==="teacher"&&p==="123456"){
-        document.getElementById("teacher-login").style.display="none";
-        document.getElementById("teacher-main").style.display="block";
-        refreshTeacher();
-    }else alert("账号密码错误");
-};
-
-//标签切换
-document.querySelectorAll(".tab").forEach((tab,i)=>{
-    tab.onclick=()=>{
-        document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-        document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
-        tab.classList.add("active");
-        document.querySelectorAll(".panel")[i].classList.add("active");
-        if(document.querySelectorAll(".panel")[i].id==="wrong")renderWrong();
-        if(document.querySelectorAll(".panel")[i].id==="msg")renderMsg();
-        if(document.querySelectorAll(".panel")[i].id==="task")renderTask();
+document.addEventListener('DOMContentLoaded', function() {
+    // ========== 1. 全局配置：所有模块的内容数据 ==========
+    const moduleData = {
+        '题库学习': {
+            title: '题库学习',
+            items: []
+        },
+        '每日一练': {
+            title: '每日一练',
+            items: []
+        },
+        '章节测试': {
+            title: '章节测试',
+            items: []
+        },
+        '视频讲解': {
+            title: '视频讲解',
+            items: []
+        },
+        'AI辅导': {
+            title: 'AI辅导',
+            content: `
+                <ul style="list-style: disc inside; line-height: 1.8;">
+                    <li>公式考点系统梳理</li>
+                    <li>解题步骤详细讲解</li>
+                    <li>薄弱环节分析</li>
+                    <li>错题归类强化训练</li>
+                </ul>
+                <p style="margin-top: 15px; color: #666;">点击下方按钮，即可开启AI智能辅导对话。</p>
+                <button style="margin-top:10px; padding: 8px 20px; background: #1677ff; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="alert('AI辅导功能已激活！')">开启AI辅导</button>
+            `
+        },
+        '数学书籍': {
+            title: '数学书籍',
+            books: [
+                { category: '初中', name: '初中数学知识清单' },
+                { category: '初中', name: '几何辅助线秘籍' },
+                { category: '高中', name: '高中数学基础知识手册' },
+                { category: '高中', name: '高考题型与技巧' }
+            ]
+        },
+        '课外阅读': {
+            title: '全年龄段课外阅读',
+            books: [
+                { category: '小学故事', name: '夏洛的网' },
+                { category: '小学故事', name: '小王子' },
+                { category: '小学故事', name: '草房子' },
+                { category: '初中文学', name: '朝花夕拾' },
+                { category: '初中文学', name: '钢铁是怎样炼成的' },
+                { category: '人物传记', name: '苏东坡传' },
+                { category: '人物传记', name: '居里夫人传' },
+                { category: '人物传记', name: '毛泽东传' }
+            ]
+        },
+        '错题本': {
+            title: '错题本',
+            items: []
+        },
+        '作业上传': {
+            title: '作业上传',
+            items: []
+        },
+        '留言板': {
+            title: '留言板',
+            items: []
+        },
+        '统计': {
+            title: '统计',
+            items: []
+        }
     };
-});
-document.querySelectorAll(".tea-tab").forEach((t,i)=>{
-    t.onclick=()=>{
-        document.querySelectorAll(".tea-tab").forEach(x=>x.classList.remove("active"));
-        document.querySelectorAll(".tea-panel").forEach(x=>x.classList.remove("active"));
-        t.classList.add("active");
-        document.querySelectorAll(".tea-panel")[i].classList.add("active");
-        refreshTeacher();
-    };
-});
 
-//渲染
-function renderAll(){renderQuiz();renderDaily();renderTest();refreshStats();renderMsg();renderTask();}
-function renderQuiz(){
-    let b=document.getElementById("quiz-list");b.innerHTML="";
-    COURSE_DATA.lessons.forEach((les,li)=>{
-        let d=document.createElement("div");
-        d.innerHTML=`<h3 class="lesson-title">${les.name}</h3>`;
-        les.list.forEach((q,qi)=>{
-            let id=li*100+qi;
-            d.innerHTML+=`
-                <div class="quiz-item">
-                    <p>题目${qi+1}：${q.q}</p>
-                    ${q.opt.map(o=>`<label class="option"><input type="radio" name="q${id}" value="${o}">${o}</label>`).join('')}
-                    <button onclick="check(${li},${qi},${id})">提交</button>
-                    <p id="res${id}" class="result"></p>
-                </div>`;
+    // ========== 2. 核心功能：标签切换修复 ==========
+    const tabs = document.querySelectorAll('[data-tab]');
+    const mainContent = document.getElementById('main-content'); // 你的页面主内容容器
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetTab = this.getAttribute('data-tab');
+
+            // 切换标签高亮状态
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            // 渲染对应模块内容
+            renderModuleContent(targetTab);
         });
-        b.appendChild(d);
     });
-}
-function renderDaily(){
-    let b=document.getElementById("daily-list");b.innerHTML="";
-    daily.forEach((q,i)=>{
-        b.innerHTML+=`
-            <div class="quiz-item">
-                <p>每日${i+1}：${q.q}</p>
-                ${q.opt.map(o=>`<label class="option"><input type="radio" name="d${i}" value="${o}">${o}</label>`).join('')}
-                <button onclick="checkDaily(${i})">提交</button>
-                <p id="dres${i}" class="result"></p>
-            </div>`;
+
+    // ========== 3. 内容渲染函数（解决空白/加载失败问题） ==========
+    function renderModuleContent(tabName) {
+        const module = moduleData[tabName];
+        if (!module || !mainContent) return;
+
+        // 清空原有内容
+        mainContent.innerHTML = '';
+
+        // 渲染标题
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'module-title';
+        titleEl.textContent = module.title;
+        mainContent.appendChild(titleEl);
+
+        // 分支渲染不同类型的模块
+        if (tabName === 'AI辅导') {
+            // 渲染AI辅导内容
+            const contentEl = document.createElement('div');
+            contentEl.className = 'ai-tutor-content';
+            contentEl.innerHTML = module.content;
+            mainContent.appendChild(contentEl);
+        } else if (module.books) {
+            // 渲染书籍列表（课外阅读/数学书籍）
+            const bookListEl = document.createElement('div');
+            bookListEl.className = 'book-list';
+
+            // 按分类分组渲染
+            const categories = [...new Set(module.books.map(b => b.category))];
+            categories.forEach(cat => {
+                // 分类标题
+                const catEl = document.createElement('div');
+                catEl.className = 'book-category';
+                catEl.textContent = cat;
+                bookListEl.appendChild(catEl);
+
+                // 书籍项
+                module.books.filter(b => b.category === cat).forEach(book => {
+                    const bookEl = document.createElement('div');
+                    bookEl.className = 'book-item';
+                    bookEl.textContent = book.name;
+                    // 书籍点击事件
+                    bookEl.addEventListener('click', function() {
+                        alert(`已打开：${book.name}\n（如需对接阅读功能，可在此添加跳转链接）`);
+                    });
+                    bookListEl.appendChild(bookEl);
+                });
+            });
+
+            mainContent.appendChild(bookListEl);
+        } else {
+            // 其他空模块（可后续扩展内容）
+            const placeholderEl = document.createElement('div');
+            placeholderEl.className = 'placeholder-content';
+            placeholderEl.textContent = `${tabName}模块内容加载中，敬请期待...`;
+            mainContent.appendChild(placeholderEl);
+        }
+    }
+
+    // ========== 4. 页面初始化：加载默认激活的标签 ==========
+    const activeTab = document.querySelector('[data-tab].active');
+    if (activeTab) {
+        const defaultTab = activeTab.getAttribute('data-tab');
+        renderModuleContent(defaultTab);
+    }
+
+    // ========== 5. 强制修复：缓存/后退导致的渲染问题 ==========
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            const activeTab = document.querySelector('[data-tab].active');
+            if (activeTab) {
+                renderModuleContent(activeTab.getAttribute('data-tab'));
+            }
+        }
     });
-}
-function renderTest(){
-    let b=document.getElementById("test-list");b.innerHTML="";
-    test.forEach((q,i)=>{
-        b.innerHTML+=`
-            <div class="quiz-item">
-                <p>测试${i+1}：${q.q}</p>
-                ${q.opt.map(o=>`<label class="option"><input type="radio" name="t${i}" value="${o}">${o}</label>`).join('')}
-            </div>`;
-    });
-}
-
-//判题+积分
-function check(li,qi,id){
-    let q=COURSE_DATA.lessons[li].list[qi];
-    let s=document.querySelector(`input[name="q${id}"]:checked`);
-    if(!s){document.getElementById(`res${id}`).innerText="请选择";return;}
-    total++;
-    if(s.value===q.ans){right++;point+=5;document.getElementById(`res${id}`).innerText="✅ +5积分";}
-    else{wrongList.push({q:q.q,you:s.value,ans:q.ans});document.getElementById(`res${id}`).innerText="❌ "+q.ans;}
-    save();refreshStats();
-}
-function checkDaily(i){
-    let q=daily[i];let s=document.querySelector(`input[name="d${i}"]:checked`);
-    if(!s)return;total++;
-    if(s.value===q.ans){right++;point+=3;document.getElementById(`dres${i}`).innerText="✅ +3积分";}
-    else{wrongList.push({q:q.q,you:s.value,ans:q.ans});document.getElementById(`dres${i}`).innerText="❌ "+q.ans;}
-    save();refreshStats();
-}
-document.getElementById("submitTest").onclick=()=>{
-    let r=0;test.forEach((q,i)=>{let s=document.querySelector(`input[name="t${i}"]:checked`);if(s&&s.value===q.ans)r++;});
-    document.getElementById("test-result").innerText=`得分：${r}/${test.length}`;
-    point+=r*2;save();refreshStats();
-};
-
-//统计
-function refreshStats(){
-    document.getElementById("total").innerText=total;
-    document.getElementById("right").innerText=right;
-    document.getElementById("wrong-count").innerText=wrongList.length;
-    document.getElementById("rate").innerText=(total?Math.round(right/total*100):0)+"%";
-    document.getElementById("scorePoint").innerText=point;
-}
-function renderWrong(){
-    let b=document.getElementById("wrong-list");
-    b.innerHTML=wrongList.length?wrongList.map((w,i)=>`
-        <div class="wrong-item"><p>错题${i+1}：${w.q}</p><p>你：${w.you} 正确：${w.ans}</p></div>
-    `).join(''):"<p>暂无错题</p>";
-}
-
-//留言
-document.getElementById("sendMsg").onclick=()=>{
-    let c=document.getElementById("msgInput").value;if(!c)return;
-    msgs.push({name:studentName,content:c,time:new Date().toLocaleString()});
-    document.getElementById("msgInput").value="";renderMsg();
-};
-function renderMsg(){
-    document.getElementById("msgList").innerHTML=msgs.map(m=>`
-        <div class="msg-item"><b>${m.name}</b> ${m.time}<br>${m.content}</div>
-    `).join('');
-}
-
-//作业
-document.getElementById("sendTask").onclick=()=>{
-    let c=document.getElementById("taskContent").value;if(!c)return;
-    tasks.push({name:studentName,content:c,time:new Date().toLocaleString()});
-    document.getElementById("taskContent").value="";renderTask();alert("提交成功");
-};
-function renderTask(){
-    document.getElementById("taskList").innerHTML=tasks.filter(t=>t.name===studentName).map(t=>`
-        <div class="task-item">${t.time}<br>${t.content}</div>
-    `).join('');
-}
-
-//保存学生
-function save(){
-    let d={name:studentName,total,right,wrong:wrongList.length,point,wrongList};
-    let i=allStudents.findIndex(s=>s.name===studentName);
-    if(i>=0)allStudents[i]=d;else allStudents.push(d);
-}
-
-//教师刷新
-function refreshTeacher(){
-    document.getElementById("student-data").innerHTML=allStudents.map(s=>`
-        <div class="student-card"><h3>${s.name}</h3><p>总题：${s.total} 正确：${s.right} 积分：${s.point||0}</p></div>
-    `).join('');
-    document.getElementById("teacherTaskList").innerHTML=tasks.map(t=>`
-        <div class="task-item"><b>${t.name}</b> ${t.time}<br>${t.content}</div>
-    `).join('');
-    document.getElementById("teacherMsgList").innerHTML=msgs.map(m=>`
-        <div class="msg-item"><b>${m.name}</b> ${m.time}<br>${m.content}</div>
-    `).join('');
-}
-
-//教师加题
-document.getElementById("addQuestion").onclick=()=>{
-    let q=document.getElementById("qTitle").value,o1=document.getElementById("qOpt1").value,o2=document.getElementById("qOpt2").value,a=document.getElementById("qAns").value;
-    if(!q||!o1||!o2||!a){alert("填写完整");return;}
-    COURSE_DATA.lessons[0].list.push({q,opt:[o1,o2,document.getElementById("qOpt3").value,document.getElementById("qOpt4").value],ans:a});
-    alert("添加成功");renderQuiz();
-};
+});
